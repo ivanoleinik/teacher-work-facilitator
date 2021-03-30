@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import pandas as pd
 from tensorflow import keras
 from tensorflow.keras import layers
 import tensorflow_datasets as tfds
-from src.experiments.stats import otsu
-import matplotlib.pyplot as plt
-
+from src.ImageProcessing.Cvasya import Cvasya
 
 NUM_CLASSES = 10
 INPUT_SHAPE = (28, 28, 1)
 
 
-def load_images(interpolation='area'):
+def load_images(interpolation='area'):  # 'area' interpolation is the best one
     return tfds.as_numpy(
         keras.preprocessing.image_dataset_from_directory(
             'src/experiments/data',
@@ -60,11 +57,10 @@ class Model1:
                            optimizer="adam",
                            metrics=["accuracy"])
 
-    def fit(self, x_train, y_train, x_test, y_test):
+    def fit(self, x_train, y_train):
         self.model.fit(x_train, y_train,
                        batch_size=self.batch_size,
-                       epochs=self.epochs,
-                       validation_data=(x_test, y_test))
+                       epochs=self.epochs)
 
     def score(self, x_test, y_test):
         return self.model.evaluate(x_test, y_test, verbose=0)
@@ -96,12 +92,11 @@ class Model2:
                            optimizer=keras.optimizers.Adadelta(),
                            metrics=['accuracy'])
 
-    def fit(self, x_train, y_train, x_test, y_test):
+    def fit(self, x_train, y_train):
         self.model.fit(x_train, y_train,
                        batch_size=self.batch_size,
                        epochs=self.epochs,
-                       verbose=1,
-                       validation_data=(x_test, y_test))
+                       verbose=1)
 
     def score(self, x_test, y_test):
         return self.model.evaluate(x_test, y_test, verbose=0)
@@ -134,11 +129,10 @@ class Model3:
                            optimizer='adam',
                            metrics=['accuracy'])
 
-    def fit(self, x_train, y_train, x_test, y_test):
+    def fit(self, x_train, y_train):
         self.model.fit(x_train, y_train,
                        batch_size=self.batch_size,
-                       epochs=self.epochs,
-                       validation_data=(x_test, y_test))
+                       epochs=self.epochs)
 
     def score(self, x_test, y_test):
         return self.model.evaluate(x_test, y_test, verbose=0)
@@ -150,13 +144,13 @@ def main():
 
     x_test, y_test = next(iter(load_images()))
     for i, x in enumerate(x_test):
-        x_test[i] = otsu(~x.astype(np.uint8)).reshape(INPUT_SHAPE)
+        x_test[i] = Cvasya.otsu(~x.astype(np.uint8)).reshape(INPUT_SHAPE)
     x_test, y_test = preprocess(x_test.reshape(-1, 28, 28), y_test)
 
     models = [Model1(), Model3()]
 
     for model in models:
-        model.fit(x_train, y_train, x_test, y_test)
+        model.fit(x_train, y_train)
         print(model.score(x_test, y_test)[1])
 
 

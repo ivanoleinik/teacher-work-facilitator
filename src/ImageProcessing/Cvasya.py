@@ -1,7 +1,7 @@
 import cv2
 
 
-class ImageTransformer:
+class Cvasya:
     """Library for image transforming."""
 
     @staticmethod
@@ -17,3 +17,8 @@ class ImageTransformer:
         res = cv2.resize(gray, (28, 28), interpolation=interpolation)
         _, mnist_img = cv2.threshold(res, 0, 255, cv2.THRESH_OTSU + cv2.THRESH_TOZERO)
         return mnist_img
+
+    @staticmethod
+    def otsu(img):
+        return cv2.threshold(img, 0, 255, cv2.THRESH_OTSU + cv2.THRESH_TOZERO)[1]
+
