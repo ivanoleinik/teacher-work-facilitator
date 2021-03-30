@@ -1,53 +1,164 @@
-# https://keras.io/examples/vision/mnist_convnet/
+#!/usr/bin/env python3
 
 import numpy as np
+import pandas as pd
 from tensorflow import keras
 from tensorflow.keras import layers
-
-# Model / data parameters
-num_classes = 10
-input_shape = (28, 28, 1)
-
-# the data, split between train and test sets
-(x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
-
-# Scale images to the [0, 1] range
-x_train = x_train.astype("float32") / 255
-x_test = x_test.astype("float32") / 255
-# Make sure images have shape (28, 28, 1)
-x_train = np.expand_dims(x_train, -1)
-x_test = np.expand_dims(x_test, -1)
-print("x_train shape:", x_train.shape)
-print(x_train.shape[0], "train samples")
-print(x_test.shape[0], "test samples")
+import tensorflow_datasets as tfds
+from src.experiments.stats import otsu
+import matplotlib.pyplot as plt
 
 
-# convert class vectors to binary class matrices
-y_train = keras.utils.to_categorical(y_train, num_classes)
-y_test = keras.utils.to_categorical(y_test, num_classes)
+NUM_CLASSES = 10
+INPUT_SHAPE = (28, 28, 1)
 
-model = keras.Sequential(
-    [
-        keras.Input(shape=input_shape),
-        layers.Conv2D(32, kernel_size=(3, 3), activation="relu"),
-        layers.MaxPooling2D(pool_size=(2, 2)),
-        layers.Conv2D(64, kernel_size=(3, 3), activation="relu"),
-        layers.MaxPooling2D(pool_size=(2, 2)),
-        layers.Flatten(),
-        layers.Dropout(0.5),
-        layers.Dense(num_classes, activation="softmax"),
-    ]
-)
 
-model.summary()
+def load_images(interpolation='area'):
+    return tfds.as_numpy(
+        keras.preprocessing.image_dataset_from_directory(
+            'src/experiments/data',
+            labels='inferred',
+            label_mode='int',
+            color_mode="grayscale",
+            batch_size=1000,
+            image_size=(28, 28),
+            seed=1337,
+            interpolation=interpolation
+        )
+    )
 
-batch_size = 128
-epochs = 15
 
-model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+def preprocess(x, y):
+    x = x.astype("float32") / 255
+    x = np.expand_dims(x, -1)
+    y = keras.utils.to_categorical(y, NUM_CLASSES)
+    return x, y
 
-model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.1)
 
-score = model.evaluate(x_test, y_test, verbose=0)
-print("Test loss:", score[0])
-print("Test accuracy:", score[1])
+class Model1:
+    """SCORE: 0.8375"""
+    """https://keras.io/examples/vision/mnist_convnet/"""
+
+    def __init__(self):
+        self.model = keras.Sequential(
+            [
+                keras.Input(shape=INPUT_SHAPE),
+                layers.Conv2D(32, kernel_size=(3, 3), activation="relu"),
+                layers.MaxPooling2D(pool_size=(2, 2)),
+                layers.Conv2D(64, kernel_size=(3, 3), activation="relu"),
+                layers.MaxPooling2D(pool_size=(2, 2)),
+                layers.Flatten(),
+                layers.Dropout(0.5),
+                layers.Dense(NUM_CLASSES, activation="softmax"),
+            ]
+        )
+
+        self.batch_size = 128
+        self.epochs = 15
+
+        self.model.compile(loss="categorical_crossentropy",
+                           optimizer="adam",
+                           metrics=["accuracy"])
+
+    def fit(self, x_train, y_train, x_test, y_test):
+        self.model.fit(x_train, y_train,
+                       batch_size=self.batch_size,
+                       epochs=self.epochs,
+                       validation_data=(x_test, y_test))
+
+    def score(self, x_test, y_test):
+        return self.model.evaluate(x_test, y_test, verbose=0)
+
+
+class Model2:
+    """REALLY BAD NN!!!"""
+    """https://data-flair.training/blogs/python-deep-learning-project-handwritten-digit-recognition/"""
+
+    def __init__(self):
+        self.model = keras.Sequential(
+            [
+                keras.Input(shape=INPUT_SHAPE),
+                layers.Conv2D(32, kernel_size=(3, 3), activation='relu'),
+                layers.Conv2D(64, (3, 3), activation='relu'),
+                layers.MaxPooling2D(pool_size=(2, 2)),
+                layers.Dropout(0.25),
+                layers.Flatten(),
+                layers.Dense(256, activation='relu'),
+                layers.Dropout(0.5),
+                layers.Dense(NUM_CLASSES, activation='softmax')
+            ]
+        )
+
+        self.batch_size = 128
+        self.epochs = 10
+
+        self.model.compile(loss=keras.losses.categorical_crossentropy,
+                           optimizer=keras.optimizers.Adadelta(),
+                           metrics=['accuracy'])
+
+    def fit(self, x_train, y_train, x_test, y_test):
+        self.model.fit(x_train, y_train,
+                       batch_size=self.batch_size,
+                       epochs=self.epochs,
+                       verbose=1,
+                       validation_data=(x_test, y_test))
+
+    def score(self, x_test, y_test):
+        return self.model.evaluate(x_test, y_test, verbose=0)
+
+
+class Model3:
+    """SCORE: 0.83745"""
+    """https://machinelearningmastery.com/handwritten-digit-recognition-using-convolutional-neural-networks-python-keras/"""
+
+    def __init__(self):
+        self.model = keras.Sequential(
+            [
+                keras.Input(shape=INPUT_SHAPE),
+                layers.Conv2D(30, (5, 5), activation='relu'),
+                layers.MaxPooling2D(),
+                layers.Conv2D(15, (3, 3), activation='relu'),
+                layers.MaxPooling2D(),
+                layers.Dropout(0.2),
+                layers.Flatten(),
+                layers.Dense(128, activation='relu'),
+                layers.Dense(50, activation='relu'),
+                layers.Dense(NUM_CLASSES, activation='softmax')
+            ]
+        )
+
+        self.batch_size = 200
+        self.epochs = 10
+
+        self.model.compile(loss='categorical_crossentropy',
+                           optimizer='adam',
+                           metrics=['accuracy'])
+
+    def fit(self, x_train, y_train, x_test, y_test):
+        self.model.fit(x_train, y_train,
+                       batch_size=self.batch_size,
+                       epochs=self.epochs,
+                       validation_data=(x_test, y_test))
+
+    def score(self, x_test, y_test):
+        return self.model.evaluate(x_test, y_test, verbose=0)
+
+
+def main():
+    (x_train, y_train), _ = keras.datasets.mnist.load_data()
+    x_train, y_train = preprocess(x_train, y_train)
+
+    x_test, y_test = next(iter(load_images()))
+    for i, x in enumerate(x_test):
+        x_test[i] = otsu(~x.astype(np.uint8)).reshape(INPUT_SHAPE)
+    x_test, y_test = preprocess(x_test.reshape(-1, 28, 28), y_test)
+
+    models = [Model1(), Model3()]
+
+    for model in models:
+        model.fit(x_train, y_train, x_test, y_test)
+        print(model.score(x_test, y_test)[1])
+
+
+if __name__ == '__main__':
+    main()
