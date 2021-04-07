@@ -4,7 +4,7 @@ import numpy as np
 from tensorflow import keras
 from tensorflow.keras import layers
 import tensorflow_datasets as tfds
-from src.ImageProcessing.Cvasya import Cvasya
+from src.ImageProcessing.CVasya import CVasya
 
 NUM_CLASSES = 10
 INPUT_SHAPE = (28, 28, 1)
@@ -144,7 +144,7 @@ def main():
 
     x_test, y_test = next(iter(load_images()))
     for i, x in enumerate(x_test):
-        x_test[i] = Cvasya.otsu(~x.astype(np.uint8)).reshape(INPUT_SHAPE)
+        x_test[i] = CVasya.otsu(~x.astype(np.uint8)).reshape(INPUT_SHAPE)
     x_test, y_test = preprocess(x_test.reshape(-1, 28, 28), y_test)
 
     models = [Model1(), Model3()]

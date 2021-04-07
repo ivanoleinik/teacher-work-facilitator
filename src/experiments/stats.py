@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from IPython.display import display
 from keras.datasets import mnist
-from src.ImageProcessing.Cvasya import Cvasya
+from src.ImageProcessing.CVasya import CVasya
 from src.experiments.models import Model1, Model3, load_images, preprocess, INPUT_SHAPE
 
 INTERPOLATIONS = ['bilinear', 'nearest', 'bicubic', 'area',
@@ -24,7 +24,7 @@ def main():
     for interpolation in INTERPOLATIONS:
         x_test, y_test = next(iter(load_images(interpolation=interpolation)))
         for i, x in enumerate(x_test):
-            x_test[i] = Cvasya.otsu(~x.astype(np.uint8)).reshape(INPUT_SHAPE)
+            x_test[i] = CVasya.otsu(~x.astype(np.uint8)).reshape(INPUT_SHAPE)
         x_test, y_test = preprocess(x_test.reshape(-1, 28, 28), y_test)
         stats_df = stats_df.append({'interpolation': interpolation,
                                     'model': 'Model1',
