@@ -138,6 +138,48 @@ class Model3:
         return self.model.evaluate(x_test, y_test, verbose=0)
 
 
+class Model4:
+    def __init__(self):
+        self.model = keras.Sequential(
+            [
+                keras.Input(shape=INPUT_SHAPE),
+                layers.Conv2D(7, (3, 3), activation='relu'),
+                layers.Conv2D(14, (3, 3), activation='relu'),
+                layers.MaxPooling2D((2, 2)),
+                layers.Dropout(0.25),
+
+                layers.Conv2D(14, (3, 3), activation='relu'),
+                layers.MaxPooling2D((2, 2)),
+                layers.Dropout(0.25),
+
+                layers.Conv2D(28, (3, 3), activation='relu'),
+                layers.MaxPooling2D((2, 2)),
+                layers.Dropout(0.25),
+
+                layers.MaxPooling2D((6, 6)),
+                layers.Flatten(),
+                layers.Dense(28, activation='relu'),
+                layers.Dropout(0.5),
+                layers.Dense(NUM_CLASSES, activation='softmax')
+            ]
+        )
+
+        self.batch_size = 128
+        self.epochs = 10
+
+        self.model.compile(loss=keras.losses.CategoricalCrossentropy(from_logits=True),
+                           optimizer=keras.optimizers.Adam(),
+                           metrics=['accuracy'])
+
+    def fit(self, x_train, y_train):
+        self.model.fit(x_train, y_train,
+                       batch_size=self.batch_size,
+                       epochs=self.epochs)
+
+    def score(self, x_test, y_test):
+        return self.model.evaluate(x_test, y_test, verbose=1)
+
+
 def main():
     (x_train, y_train), _ = keras.datasets.mnist.load_data()
     x_train, y_train = preprocess(x_train, y_train)
@@ -147,7 +189,7 @@ def main():
         x_test[i] = CVasya.otsu(~x.astype(np.uint8)).reshape(INPUT_SHAPE)
     x_test, y_test = preprocess(x_test.reshape(-1, 28, 28), y_test)
 
-    models = [Model1(), Model3()]
+    models = [Model4()]
 
     for model in models:
         model.fit(x_train, y_train)
