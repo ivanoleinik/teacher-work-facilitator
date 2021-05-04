@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+from functools import cmp_to_key
 
 
 class CVasya:
@@ -42,7 +43,7 @@ class CVasya:
             plt.close()
 
     @staticmethod
-    def filter_image_laplacian(img, fileNum=None, is_bgr=True, c=1.3, blur_ker=(5, 5), block=7):
+    def filter_image_laplacian(img, fileNum=None, is_bgr=True, c=1.3, blur_ker=(9, 9), block=11):
         block_agf = 11
         c_agf = 4.5
 
@@ -52,7 +53,7 @@ class CVasya:
             gray = img
         if blur_ker is not None:
             gray = cv2.blur(gray, blur_ker)
-        CVasya.filter_image_using_hist(gray, fileNum)
+        #CVasya.filter_image_using_hist(gray, fileNum)
         bin_agf = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, block_agf, c_agf)
 
         laplace = cv2.Laplacian(gray, cv2.CV_8UC1)
@@ -70,29 +71,46 @@ class CVasya:
         for op in operations:
             img_res = cv2.morphologyEx(img_res, op, element)
 
-        cv2.imwrite(f'src/experiments/full_data/output/raw/{i}.jpg', img_res)
+        #cv2.imwrite(f'src/experiments/full_data/output/raw/{i}.jpg', img_res)
         contours, hierarchy = cv2.findContours(img_res, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         rects = [cv2.boundingRect(c) for c in contours if c.shape[0] > w * h / 1e5]
-        rectPoints = [
-            (int(r[0] - r[2] * 0.02), int(r[1] - r[3] * 0.08), int(r[0] + r[2] * 1.05), int(r[1] + r[3] * 1.05))
+
+        def compare_rectangles(r1, r2):
+            inter_length = max(min(r1[3], r2[3]) - max(r1[1], r2[1]), 0)
+            if inter_length > (r1[3] - r1[1]) // 2:
+                return r1[0] - r2[0]
+            return r1[1] - r2[1]
+
+        rect_points = [
+            (max(0, int(r[0] - r[2] * 0.02)), max(0, int(r[1] - r[3] * 0.08)), min(w, int(r[0] + r[2] * 1.05)), min(h, int(r[1] + r[3] * 1.05)))
             for r in rects
             if w / 3 > r[2] > w / 100 and h / 3 > r[3] > h / 100
         ]
-        return rectPoints
+        return sorted(rect_points, key=cmp_to_key(compare_rectangles))
+
+    @staticmethod
+    def cut_digits(img):
+        rects = CVasya.detect_digits(img)
+        return [img[y0:y1, x0:x1, :] for x0, y0, x1, y1 in rects]
+
 
 
 if __name__ == '__main__':
     total = 10
-    for i in range(total):
-        digit = cv2.imread(f'src/experiments/data/{i}/{np.random.randint(7)}.png')
-        cv2.imshow('mnist', CVasya.mnist_filter(digit))
-        cv2.imshow('old mnist', CVasya.bgr_to_mnist(digit))
-        img = cv2.imread(f'src/experiments/full_data/{i}.jpg')
-        cv2.waitKey(0)
-        rects = CVasya.detect_digits(img, i)
-        for r in rects:
-            cv2.rectangle(img, r[:2], r[2:], (0, 0, 255))
-        cv2.imwrite(f'src/experiments/full_data/output/{i}.jpg', img)
-        print(f'{100 * (i + 1) // total}% done')
+    # for i in range(total):
+    #     digit = cv2.imread(f'src/experiments/data/{i}/{np.random.randint(7)}.png')
+    #     # cv2.imshow('mnist', CVasya.mnist_filter(digit))
+    #     # cv2.imshow('old mnist', CVasya.bgr_to_mnist(digit))
+    #     img = cv2.imread(f'src/experiments/full_data/{i}.jpg')
+    #     cv2.waitKey(0)
+    #     rects = CVasya.detect_digits(img, i)
+    #     for r in rects:
+    #         cv2.rectangle(img, r[:2], r[2:], (0, 0, 255))
+    #     cv2.imwrite(f'src/experiments/full_data/output/{i}.jpg', img)
+    #     print(f'{100 * (i + 1) // total}% done')
+    img = cv2.imread('src/experiments/dgts.png')
+    dgts = CVasya.cut_digits(img)
+    for i, d in enumerate(dgts[:4] + dgts[4:-1]):
+        cv2.imwrite(f'src/experiments/data/{i}/6.png', d)
 
 
