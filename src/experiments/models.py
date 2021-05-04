@@ -139,26 +139,26 @@ class Model3:
 
 
 class Model4:
+    """SCORE: 0.875"""
     def __init__(self):
         self.model = keras.Sequential(
             [
                 keras.Input(shape=INPUT_SHAPE),
-                layers.Conv2D(7, (3, 3), activation='relu'),
-                layers.Conv2D(14, (3, 3), activation='relu'),
+                layers.Conv2D(16, (3, 3), activation='relu'),
+                layers.Conv2D(32, (3, 3), activation='relu'),
                 layers.MaxPooling2D((2, 2)),
                 layers.Dropout(0.25),
 
-                layers.Conv2D(14, (3, 3), activation='relu'),
+                layers.Conv2D(32, (3, 3), activation='relu'),
                 layers.MaxPooling2D((2, 2)),
                 layers.Dropout(0.25),
 
-                layers.Conv2D(28, (3, 3), activation='relu'),
-                layers.MaxPooling2D((2, 2)),
+                layers.Conv2D(64, (3, 3), activation='relu'),
+                layers.MaxPooling2D((3, 3)),
                 layers.Dropout(0.25),
 
-                layers.MaxPooling2D((6, 6)),
                 layers.Flatten(),
-                layers.Dense(28, activation='relu'),
+                layers.Dense(64, activation='relu'),
                 layers.Dropout(0.5),
                 layers.Dense(NUM_CLASSES, activation='softmax')
             ]
