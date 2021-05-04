@@ -110,7 +110,7 @@ if __name__ == '__main__':
     #     print(f'{100 * (i + 1) // total}% done')
     img = cv2.imread('src/experiments/dgts.png')
     dgts = CVasya.cut_digits(img)
-    for i, d in enumerate(dgts[:4] + dgts[4:-1]):
+    for i, d in enumerate(dgts[:4] + dgts[5:-1]):
         cv2.imwrite(f'src/experiments/data/{i}/6.png', d)
 
 
