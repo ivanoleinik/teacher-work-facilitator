@@ -6,7 +6,7 @@ from tensorflow.keras import layers
 import tensorflow_datasets as tfds
 from src.ImageProcessing.CVasya import CVasya
 
-NUM_CLASSES = 10
+NUM_CLASSES = 15
 INPUT_SHAPE = (28, 28, 1)
 
 
@@ -21,6 +21,21 @@ def load_images(interpolation='area'):  # 'area' interpolation is the best one
             image_size=(28, 28),
             seed=1337,
             interpolation=interpolation
+        )
+    )
+
+
+def load_signs():
+    return tfds.as_numpy(
+        keras.preprocessing.image_dataset_from_directory(
+            'src/experiments/signs',
+            labels='inferred',
+            label_mode='int',
+            color_mode="grayscale",
+            batch_size=10000,
+            image_size=(28, 28),
+            seed=1337,
+            interpolation='area'
         )
     )
 
@@ -165,7 +180,7 @@ class Model4:
         )
 
         self.batch_size = 128
-        self.epochs = 10
+        self.epochs = 15
 
         self.model.compile(loss=keras.losses.CategoricalCrossentropy(from_logits=True),
                            optimizer=keras.optimizers.Adam(),
@@ -182,18 +197,13 @@ class Model4:
 
 def main():
     (x_train, y_train), _ = keras.datasets.mnist.load_data()
-    x_train, y_train = preprocess(x_train, y_train)
+    x_signs, y_signs = next(iter(load_signs()))
+    x_train, y_train = preprocess(np.concatenate((x_train, x_signs.reshape(-1, 28, 28)), axis=0),
+                                  np.concatenate((y_train, y_signs + 10), axis=0))
 
-    x_test, y_test = next(iter(load_images()))
-    for i, x in enumerate(x_test):
-        x_test[i] = CVasya.otsu(~x.astype(np.uint8)).reshape(INPUT_SHAPE)
-    x_test, y_test = preprocess(x_test.reshape(-1, 28, 28), y_test)
-
-    models = [Model4()]
-
-    for model in models:
-        model.fit(x_train, y_train)
-        print(model.score(x_test, y_test)[1])
+    model = Model4()
+    model.fit(x_train, y_train)
+    model.model.save('src/experiments')
 
 
 if __name__ == '__main__':
