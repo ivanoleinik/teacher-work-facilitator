@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 
+import cv2
 import numpy as np
+import tensorflow
 from tensorflow import keras
+from keras.models import load_model
 from tensorflow.keras import layers
 import tensorflow_datasets as tfds
 from src.ImageProcessing.CVasya import CVasya
@@ -10,7 +13,7 @@ NUM_CLASSES = 15
 INPUT_SHAPE = (28, 28, 1)
 
 
-def load_images(interpolation='area'):  # 'area' interpolation is the best one
+def load_images():  # load test images from data
     return tfds.as_numpy(
         keras.preprocessing.image_dataset_from_directory(
             'src/experiments/data',
@@ -20,12 +23,12 @@ def load_images(interpolation='area'):  # 'area' interpolation is the best one
             batch_size=1000,
             image_size=(28, 28),
             seed=1337,
-            interpolation=interpolation
+            interpolation='area'
         )
     )
 
 
-def load_signs():
+def load_signs():  # load train signs from signs
     return tfds.as_numpy(
         keras.preprocessing.image_dataset_from_directory(
             'src/experiments/signs',
@@ -189,6 +192,7 @@ class Model4:
     def fit(self, x_train, y_train):
         self.model.fit(x_train, y_train,
                        batch_size=self.batch_size,
+                       shuffle=True and not False,
                        epochs=self.epochs)
 
     def score(self, x_test, y_test):
@@ -196,14 +200,26 @@ class Model4:
 
 
 def main():
+    tensorflow.random.set_seed(1337)
     (x_train, y_train), _ = keras.datasets.mnist.load_data()
     x_signs, y_signs = next(iter(load_signs()))
+
+    print(np.unique(y_train, return_counts=True))
     x_train, y_train = preprocess(np.concatenate((x_train, x_signs.reshape(-1, 28, 28)), axis=0),
                                   np.concatenate((y_train, y_signs + 10), axis=0))
 
+    # model = load_model('src/experiments')
     model = Model4()
     model.fit(x_train, y_train)
     model.model.save('src/experiments')
+
+    x_test, y_test = next(iter(load_images()))
+
+    for i, x in enumerate(x_test):
+        x_test[i] = CVasya.otsu(~x.astype(np.uint8)).reshape(INPUT_SHAPE)
+
+    x_test, y_test = preprocess(x_test.reshape(-1, 28, 28), y_test)
+
 
 
 if __name__ == '__main__':

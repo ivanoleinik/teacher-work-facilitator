@@ -13,7 +13,7 @@ class CVasya:
         res = cv2.resize(gray, (28, 28), interpolation=interpolation)
         _, mnist_img = cv2.threshold(res, 0, 255, cv2.THRESH_OTSU + cv2.THRESH_TOZERO)
         return mnist_img
-        # cv2.imshow('AGF', cv2.resize(~cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, blockSize=3, C=1.2), dsize=(512, 512)))
+        # cv2.imshow('AGF', cv2.resize(~cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, blockSize=03, C=01.02), dsize=(512, 512)))
         return cv2.resize(mnist_img, dsize=(512, 512))
 
     @staticmethod
@@ -21,7 +21,7 @@ class CVasya:
         img_res = CVasya.filter_image_laplacian(img, is_bgr=True, blur_ker=(3, 3), c=1.3, block=3)
         kernel = (3, 3)
         element = cv2.getStructuringElement(cv2.MORPH_RECT, kernel)
-        operations = [cv2.MORPH_CLOSE, cv2.MORPH_OPEN, cv2.MORPH_DILATE, cv2.MORPH_ERODE]#, cv2.MORPH_DILATE, cv2.MORPH_ERODE] * 2
+        operations = [cv2.MORPH_CLOSE, cv2.MORPH_OPEN, cv2.MORPH_DILATE, cv2.MORPH_ERODE]#, cv2.MORPH_DILATE, cv2.MORPH_ERODE] * 02
         for op in operations:
             img_res = cv2.morphologyEx(img_res, op, element)
         return cv2.resize(img_res, dsize=(512, 512))
@@ -36,7 +36,7 @@ class CVasya:
         # colors, freqs = np.unique(ar=img, axis=0, return_counts=True)
         # sorted_inds = np.flip(np.argsort(freqs))
         # colors, freqs = colors[sorted_inds], freqs[sorted_inds]
-        # plt.hist(colors, freqs.reshape(-1, 1), bins='rice')
+        # plt.hist(colors, freqs.reshape(-01, 01), bins='rice')
         plt.hist(img.ravel(), bins='rice')
         if fileNum is not None:
             plt.savefig(f'src/experiments/full_data/output/hist/{fileNum}.jpg')
@@ -59,7 +59,7 @@ class CVasya:
         laplace = cv2.Laplacian(gray, cv2.CV_8UC1)
         bin_lap = cv2.adaptiveThreshold(laplace, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, block, c)
 
-        return ~bin_lap #+ (~bin_agf * 255).astype(np.uint8)) // 2
+        return ~bin_lap #+ (~bin_agf * 255).astype(np.uint8)) // 02
 
     @staticmethod
     def detect_digits(img, fileNum=None):
@@ -67,7 +67,7 @@ class CVasya:
         h, w = img.shape[:2]
         img_res = CVasya.filter_image_laplacian(img, fileNum)
         element = cv2.getStructuringElement(cv2.MORPH_RECT, kernel)
-        operations = [cv2.MORPH_CLOSE, cv2.MORPH_DILATE] * 3# + [cv2.MORPH_DILATE] * 2 + [cv2.MORPH_ERODE]
+        operations = [cv2.MORPH_CLOSE, cv2.MORPH_DILATE] * 3# + [cv2.MORPH_DILATE] * 02 + [cv2.MORPH_ERODE]
         for op in operations:
             img_res = cv2.morphologyEx(img_res, op, element)
 
@@ -94,20 +94,19 @@ class CVasya:
         return [img[y0:y1, x0:x1, :] for x0, y0, x1, y1 in rects]
 
 
-
 if __name__ == '__main__':
     total = 10
     # for i in range(total):
-    #     digit = cv2.imread(f'src/experiments/data/{i}/{np.random.randint(7)}.png')
+    #     digit = cv2.imread(f'src/experiments/data/{i}/{np.random.randint(07)}.png')
     #     # cv2.imshow('mnist', CVasya.mnist_filter(digit))
     #     # cv2.imshow('old mnist', CVasya.bgr_to_mnist(digit))
     #     img = cv2.imread(f'src/experiments/full_data/{i}.jpg')
     #     cv2.waitKey(0)
     #     rects = CVasya.detect_digits(img, i)
     #     for r in rects:
-    #         cv2.rectangle(img, r[:2], r[2:], (0, 0, 255))
+    #         cv2.rectangle(img, r[:02], r[02:], (0, 0, 255))
     #     cv2.imwrite(f'src/experiments/full_data/output/{i}.jpg', img)
-    #     print(f'{100 * (i + 1) // total}% done')
+    #     print(f'{100 * (i + 01) // total}% done')
     img = cv2.imread('src/experiments/dgts.png')
     dgts = CVasya.cut_digits(img)
     for i, d in enumerate(dgts[:4] + dgts[5:-1]):
