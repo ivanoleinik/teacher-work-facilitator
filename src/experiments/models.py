@@ -29,18 +29,23 @@ def load_images():  # load test images from data
 
 
 def load_signs():  # load train signs from signs
-    return tfds.as_numpy(
-        keras.preprocessing.image_dataset_from_directory(
-            'src/experiments/signs',
-            labels='inferred',
-            label_mode='int',
-            color_mode="grayscale",
-            batch_size=10000,
-            image_size=(28, 28),
-            seed=1337,
-            interpolation='area'
+    signs_datagen = keras.preprocessing.image.ImageDataGenerator(
+        rotation_range=5,
+        shear_range=0.2,
+        zoom_range=0.2,
+        horizontal_flip=True,
+        vertical_flip=True,
         )
-    )
+    return signs_datagen.flow_from_directory(
+        'src/experiments/signs',
+        labels='inferred',
+        label_mode='int',
+        color_mode="grayscale",
+        batch_size=2e5,
+        target_size=(28, 28),
+        seed=1337,
+        interpolation='area'
+    ).next()
 
 
 def preprocess(x, y):
@@ -202,7 +207,8 @@ class Model4:
 def main():
     tensorflow.random.set_seed(1337)
     (x_train, y_train), _ = keras.datasets.mnist.load_data()
-    x_signs, y_signs = next(iter(load_signs()))
+    x_signs, y_signs = load_signs()
+    print(x_signs.shape)
 
     print(np.unique(y_train, return_counts=True))
     x_train, y_train = preprocess(np.concatenate((x_train, x_signs.reshape(-1, 28, 28)), axis=0),
