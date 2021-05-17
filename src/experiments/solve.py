@@ -7,6 +7,9 @@ import numpy as np
 from src.ImageProcessing.CVasya import CVasya
 from keras.models import load_model
 from src.experiments.models import INPUT_SHAPE
+from itertools import product
+
+PROBA_THRESHOLD = 0.01
 
 LABELS_TO_SYMBOLS = {
     0: '0', 1: '1', 2: '2', 3: '3', 4: '4',
@@ -29,8 +32,7 @@ def img_to_lines(img):
     for line in lines:
         cur = []
         for img in line:
-            cur.append(predict_image(img, model))
-            print(predict_image(img, model, True))
+            cur.append(predict_image(img, model, proba=True))
         res.append(cur)
     return res
 
@@ -43,11 +45,39 @@ def solve(list_of_labels):
     try:
         return eval(join_list(list_of_labels))
     except SyntaxError:
-        return False
+        return None
 
 
-if __name__ == '__main__':
+def main():
     img = cv2.imread('src/experiments/full_problem.jpg')
     lines = img_to_lines(img)
     for line in lines:
-        print(join_list(line), solve(line))
+        variants = []
+        for symbol_proba in line:
+            symbol_proba = symbol_proba.ravel()
+            competitive = {}
+            for label in LABELS_TO_SYMBOLS:
+                if symbol_proba[label] > PROBA_THRESHOLD:
+                    competitive[label] = symbol_proba[label]
+            variants.append(competitive)
+        # print(variants)
+        probas = []
+        for keys in product(*[list(d.keys()) for d in variants]):
+            proba = np.prod([variants[i][key] for i, key in enumerate(keys)])
+            res = solve(keys)
+            if res is not None:
+                probas.append((proba, res))
+        probas.sort()
+        probas = probas[::-1]
+        true, false = 0.0, 0.0
+        for proba, res in probas:
+            if res:
+                true += proba
+                break
+            else:
+                false += proba
+        print(f'Truth proba: {true / (true + false)}')
+
+
+if __name__ == '__main__':
+   main()
