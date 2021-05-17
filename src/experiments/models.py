@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
-import cv2
 import numpy as np
 import tensorflow
-from tensorflow import keras
-from keras.models import load_model
-from tensorflow.keras import layers
 import tensorflow_datasets as tfds
+from tensorflow import keras
+from tensorflow.keras import layers
+
 from src.ImageProcessing.CVasya import CVasya
 
 NUM_CLASSES = 15
@@ -28,24 +27,24 @@ def load_images():  # load test images from data
     )
 
 
-def load_signs():  # load train signs from signs
+def load_signs(k=9):  # load train signs from signs
     signs_datagen = keras.preprocessing.image.ImageDataGenerator(
         rotation_range=5,
         shear_range=0.2,
         zoom_range=0.2,
         horizontal_flip=True,
         vertical_flip=True,
-        )
-    return signs_datagen.flow_from_directory(
+    )
+    xs, ys = list(zip(*[signs_datagen.flow_from_directory(
         'src/experiments/signs',
-        labels='inferred',
-        label_mode='int',
+        class_mode='categorical',
         color_mode="grayscale",
-        batch_size=2e5,
+        batch_size=20000,
         target_size=(28, 28),
-        seed=1337,
-        interpolation='area'
-    ).next()
+        seed=i,
+        # interpolation='area'
+    ).next() for i in range(k)]))
+    return np.concatenate(xs), np.concatenate(ys)
 
 
 def preprocess(x, y):
@@ -208,11 +207,10 @@ def main():
     tensorflow.random.set_seed(1337)
     (x_train, y_train), _ = keras.datasets.mnist.load_data()
     x_signs, y_signs = load_signs()
-    print(x_signs.shape)
+    y_signs = np.argmax(y_signs, axis=1) + 10
 
-    print(np.unique(y_train, return_counts=True))
     x_train, y_train = preprocess(np.concatenate((x_train, x_signs.reshape(-1, 28, 28)), axis=0),
-                                  np.concatenate((y_train, y_signs + 10), axis=0))
+                                  np.concatenate((y_train, y_signs), axis=0))
 
     # model = load_model('src/experiments')
     model = Model4()
@@ -225,7 +223,6 @@ def main():
         x_test[i] = CVasya.otsu(~x.astype(np.uint8)).reshape(INPUT_SHAPE)
 
     x_test, y_test = preprocess(x_test.reshape(-1, 28, 28), y_test)
-
 
 
 if __name__ == '__main__':
