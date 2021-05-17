@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
+import cv2
 import numpy as np
 import tensorflow
 import tensorflow_datasets as tfds
+from keras.models import load_model
 from tensorflow import keras
 from tensorflow.keras import layers
 
@@ -209,13 +211,15 @@ def main():
     x_signs, y_signs = load_signs()
     y_signs = np.argmax(y_signs, axis=1) + 10
 
+    cv2.imwrite('src/experiments/kok1.png', x_train[0])
     x_train, y_train = preprocess(np.concatenate((x_train, x_signs.reshape(-1, 28, 28)), axis=0),
                                   np.concatenate((y_train, y_signs), axis=0))
 
-    # model = load_model('src/experiments')
-    model = Model4()
-    model.fit(x_train, y_train)
-    model.model.save('src/experiments')
+    cv2.imwrite('src/experiments/kok0.png', x_signs[0])
+    model = load_model('src/experiments')
+    # model = Model4()
+    # model.fit(x_train, y_train)
+    # model.model.save('src/experiments')
 
     x_test, y_test = next(iter(load_images()))
 
