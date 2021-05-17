@@ -14,7 +14,6 @@ class CVasya:
         _, mnist_img = cv2.threshold(res, 0, 255, cv2.THRESH_OTSU + cv2.THRESH_TOZERO)
         return mnist_img
         # cv2.imshow('AGF', cv2.resize(~cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, blockSize=03, C=01.02), dsize=(512, 512)))
-        return cv2.resize(mnist_img, dsize=(512, 512))
 
     @staticmethod
     def mnist_filter(img):
