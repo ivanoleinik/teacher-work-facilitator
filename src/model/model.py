@@ -2,7 +2,6 @@
 
 import numpy as np
 import tensorflow
-import tensorflow_datasets as tfds
 from tensorflow import keras
 from tensorflow.keras import layers
 
@@ -13,7 +12,7 @@ INPUT_SHAPE = (28, 28, 1)
 
 
 def load_signs(k=9):
-    """Load train signs from signs directory"""
+    """Load train signs from signs directory."""
     signs_datagen = keras.preprocessing.image.ImageDataGenerator(
         rotation_range=5,
         shear_range=0.2,
@@ -22,7 +21,7 @@ def load_signs(k=9):
         vertical_flip=True,
     )
     xs, ys = list(zip(*[signs_datagen.flow_from_directory(
-        'src/experiments/signs',
+        'src/data/signs',
         class_mode='categorical',
         color_mode="grayscale",
         batch_size=20000,
@@ -93,7 +92,3 @@ def build_model():
     model = Model()
     model.fit(x_train, y_train)
     model.model.save('src/model')
-
-
-if __name__ == '__main__':
-    build_model()
