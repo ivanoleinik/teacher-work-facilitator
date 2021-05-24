@@ -25,10 +25,7 @@ def predict_image(img, model, proba=False):
 
 def img_to_lines(img):
     lines = Image.cut_lines(img)
-    try:
-        model = load_model('src/model')
-    except:
-        model = build_model()
+    model = load_model('src/model')
     res = []
     for line in lines:
         cur = []
@@ -54,7 +51,7 @@ def solve(list_of_labels):
 def do_check(path_to_file):
     img = cv2.imread(path_to_file)
     lines = img_to_lines(img)
-    res = []
+    report = []
     for line in lines:
         variants = []
         for symbol_proba in line:
@@ -73,7 +70,7 @@ def do_check(path_to_file):
         probas.sort()
         probas = probas[::-1]
         true, false = 0.0, 0.0
-        res.append(probas[:3])
+        report.append(probas[:3])
         for proba, res, _ in probas:
             if res:
                 true += proba
@@ -81,4 +78,4 @@ def do_check(path_to_file):
             else:
                 false += proba
         # print(f'Truth proba: {true / (true + false)}')
-    return res
+    return report

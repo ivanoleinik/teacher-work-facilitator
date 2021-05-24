@@ -21,7 +21,7 @@ def load_signs(k=9):
         vertical_flip=True,
     )
     xs, ys = list(zip(*[signs_datagen.flow_from_directory(
-        'src/data/signs',
+        'data/signs',
         class_mode='categorical',
         color_mode="grayscale",
         batch_size=20000,
@@ -83,6 +83,7 @@ class Model:
 def build_model():
     tensorflow.random.set_seed(SEED)
     (x_train, y_train), _ = keras.datasets.mnist.load_data()
+    print('Loading signs...')
     x_signs, y_signs = load_signs()
     y_signs = np.argmax(y_signs, axis=1) + 10
 
@@ -90,5 +91,6 @@ def build_model():
                                   np.concatenate((y_train, y_signs), axis=0))
 
     model = Model()
+    print('Training...')
     model.fit(x_train, y_train)
     model.model.save('src/model')
